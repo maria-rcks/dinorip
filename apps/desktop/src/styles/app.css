@@ -679,14 +679,32 @@ svg {
 }
 
 .atlas-size__square {
-  width: 28px;
+  box-sizing: border-box;
+  flex: 0 0 auto;
+  /* Match the height of the size fields beside it (26px) and stay square. */
+  width: 26px;
+  height: 26px;
+  min-height: 0;
   padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  /* Same full black outline + inset bevel as the resolution fields, instead of
+     the global button's raised light top/left border. */
+  border: 2px solid var(--black);
+  background: #d7cdbc;
+  box-shadow: inset 1px 1px 0 #fff8df, inset -2px -2px 0 #8a8376;
 }
 
 .atlas-size__square span {
   display: block;
+  /* Never let the flex layout squeeze the glyph; keep it a true square even when
+     the atlas panel is narrow (otherwise its width collapses but height stays,
+     rendering it as a portrait rectangle). */
+  flex: 0 0 auto;
   width: 12px;
   height: 12px;
+  aspect-ratio: 1;
   border: 2px solid #24231f;
   background: transparent;
 }
