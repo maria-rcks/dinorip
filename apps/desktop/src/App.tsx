@@ -27,6 +27,7 @@ import { TiledPanel } from "./panels/TiledPanel";
 import { usePanelLayout } from "./panels/usePanelLayout";
 import type { LayoutResizePart, PanelId } from "./panels/usePanelLayout";
 import { AtlasToolbar, SourceToolbar } from "./panels/PixelToolbars";
+import { ShortcutsOverlay } from "./panels/ShortcutsOverlay";
 import { defaultTextureSettings, defaultViewState } from "./renderer/types";
 import type { RipperState, TextureSettings, ViewState, WorkspaceImageState } from "./renderer/types";
 import { cloneForState, fromIpcImage, pixelImageFromBlob, toIpcImage } from "./renderer/imageCanvas";
@@ -76,6 +77,7 @@ export function App(): ReactElement {
   const [sourceView, setSourceView] = useState<ViewState>(defaultViewState);
   const [atlasView, setAtlasView] = useState<ViewState>(defaultViewState);
   const [status, setStatus] = useState("");
+  const [showShortcuts, setShowShortcuts] = useState(false);
   const [resizingPart, setResizingPart] = useState<LayoutResizePart | null>(null);
   const tilesRef = useRef<HTMLDivElement | null>(null);
   const workerRef = useRef<Worker | null>(null);
@@ -1001,6 +1003,17 @@ export function App(): ReactElement {
       <header className="app__header">
         <h1>dinorip</h1>
         <span className="app__status">{status}</span>
+        <div className="app__toolbar">
+          <button
+            type="button"
+            className="icon-button"
+            onClick={() => setShowShortcuts(true)}
+            title="Shortcuts"
+            aria-label="Show keyboard and mouse shortcuts"
+          >
+            ?
+          </button>
+        </div>
       </header>
       <div ref={tilesRef} className={tilesClassNameWithState} style={tilesStyle}>
         <TiledPanel title={PANEL_TITLES.ripper} description={PANEL_DESCRIPTIONS.ripper} {...panelProps("ripper")}>
@@ -1147,6 +1160,7 @@ export function App(): ReactElement {
           </>
         );
       })()}
+      {showShortcuts && <ShortcutsOverlay onClose={() => setShowShortcuts(false)} />}
     </main>
   );
 }

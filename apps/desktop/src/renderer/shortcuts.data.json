@@ -1,0 +1,54 @@
+{
+  "intro": "On macOS the modifier is **⌘** (Command); on Windows/Linux it is **Ctrl**.",
+  "sections": [
+    {
+      "id": "general",
+      "title": "General",
+      "shortcuts": [
+        { "action": "Undo", "keys": [["mod", "Z"]] },
+        { "action": "Redo", "keys": [["⇧", "mod", "Z"], ["mod", "Y"]] },
+        { "action": "Toggle fullscreen", "keys": [["mod", "F"]] },
+        { "action": "Paste from clipboard", "keys": [["mod", "V"]] },
+        { "action": "Zoom", "keys": [["Mouse wheel"]], "gif": "zoom.gif" },
+        { "action": "Pan the view", "keys": [["Middle-drag"], ["drag empty canvas"]], "gif": "pan.gif" },
+        { "action": "Delete selection", "keys": [["Delete / Backspace"]] }
+      ]
+    },
+    {
+      "id": "ripper",
+      "title": "Ripper",
+      "note": "Cmd/Ctrl-scaling or moving the ripper transforms any curve control points along with the corners, so curved edges keep their shape.",
+      "shortcuts": [
+        { "action": "Add a ripper", "keys": [["A"]] },
+        { "action": "Extract the ripper", "keys": [["Enter"]] },
+        { "action": "Select a ripper", "keys": [["Click it"]], "gif": "select-ripper.gif" },
+        { "action": "Move the ripper", "keys": [["Drag inside the ripper"]], "gif": "move-ripper.gif" },
+        { "action": "Move a corner", "keys": [["Drag a corner"]], "gif": "move-corner.gif" },
+        { "action": "Scale the ripper", "keys": [["mod", "drag a corner"]], "gif": "scale-ripper.gif" },
+        { "action": "Bend an edge", "keys": [["mod", "drag an edge"]], "gif": "bend-edge.gif" },
+        { "action": "Reshape a curve", "keys": [["Drag a curve handle"]], "gif": "reshape-curve.gif" },
+        { "action": "Remove a curve", "keys": [["Double-click a curve handle"]], "gif": "remove-curve.gif" },
+        { "action": "Add/remove a corner", "keys": [["⇧", "click a corner"]], "gif": "multi-select-corner.gif" },
+        { "action": "Move selected corners", "keys": [["Drag a selected corner"]], "gif": "move-corners.gif" },
+        { "action": "Marquee-select corners", "keys": [["⇧", "drag empty canvas"]], "gif": "marquee-corners.gif" },
+        { "action": "Move a source image", "keys": [["⇧", "drag the image"]], "gif": "move-image.gif" }
+      ]
+    },
+    {
+      "id": "atlas",
+      "title": "Atlas",
+      "shortcuts": [
+        { "action": "Apply adjustments", "keys": [["S"]] },
+        { "action": "Select a texture", "keys": [["Click it"]], "gif": "select-texture.gif" },
+        { "action": "Move a texture", "keys": [["Drag the texture"]], "gif": "move-texture.gif" },
+        { "action": "Resize a texture", "keys": [["Drag a corner"]], "gif": "resize-texture.gif" },
+        { "action": "Resize one side", "keys": [["Drag an edge"]], "gif": "resize-edge.gif" },
+        { "action": "Resize proportionally", "keys": [["⇧", "drag a corner"]], "gif": "resize-proportional.gif" },
+        { "action": "Rotate a texture", "keys": [["Drag the rotation handle"]], "gif": "rotate-texture.gif" },
+        { "action": "Snap rotation to 45°", "keys": [["⇧", "drag the rotation handle"]], "gif": "rotate-snap.gif" },
+        { "action": "Delete the texture", "keys": [["Delete"], ["Backspace"]] },
+        { "action": "Toggle conserve / rectify", "keys": [["Right-click the texture"]], "gif": "toggle-conserve.gif" }
+      ]
+    }
+  ]
+}

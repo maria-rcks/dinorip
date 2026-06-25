@@ -32,52 +32,59 @@ ripper / seamless-maker workflow.
 - **Export**: export the selected texture, export all textures, or export the
   full atlas as PNG.
 
+<!-- SHORTCUTS:START -->
+<!-- Generated from apps/desktop/src/renderer/shortcuts.data.json by scripts/generate-readme-shortcuts.mjs. Do not edit by hand; run `pnpm gen:shortcuts`. -->
 ## Shortcuts
 
 > On macOS the modifier is **⌘** (Command); on Windows/Linux it is **Ctrl**.
 
 ### General
 
-| Action | Shortcut |
-| --- | --- |
-| Undo | ⌘/Ctrl + Z |
-| Redo | ⇧ + ⌘/Ctrl + Z, or ⌘/Ctrl + Y |
-| Toggle fullscreen | ⌘/Ctrl + F |
-| Paste image(s) from clipboard | ⌘/Ctrl + V |
-| Zoom (anchored at cursor) | Mouse wheel |
-| Pan the view | Middle-drag, or drag empty canvas |
-| Delete selection | Delete / Backspace (ripper first, else atlas texture) |
+| Action | Shortcut | Demo |
+| --- | --- | --- |
+| Undo | ⌘/Ctrl + Z |  |
+| Redo | ⇧ + ⌘/Ctrl + Z, or ⌘/Ctrl + Y |  |
+| Toggle fullscreen | ⌘/Ctrl + F |  |
+| Paste from clipboard | ⌘/Ctrl + V |  |
+| Zoom | Mouse wheel | ![Zoom demo](assets/shortcuts/zoom.gif) |
+| Pan the view | Middle-drag, or drag empty canvas |  |
+| Delete selection | Delete / Backspace |  |
 
-### Ripper (source workspace)
+### Ripper
 
-| Action | Shortcut |
-| --- | --- |
-| Add a ripper | A |
-| Extract the selected ripper | Enter |
-| Select a ripper / image | Click it |
-| Move the whole ripper | Drag inside the ripper |
-| Move a corner | Drag a corner handle |
-| Scale the ripper (pins the opposite corner) | ⌘/Ctrl + drag a corner |
-| Bend an edge into a curve | ⌘/Ctrl + drag on an edge |
-| Reshape a curve | Drag a curve handle |
-| Remove a curve (snap the edge straight) | Double-click a curve handle |
-| Add/remove a corner in the multi-selection | ⇧ + click a corner |
-| Move several selected corners together | Drag a selected corner |
-| Marquee-select corners | ⇧ + drag on empty canvas |
-| Move a source image | ⇧ + drag the image |
+| Action | Shortcut | Demo |
+| --- | --- | --- |
+| Add a ripper | A |  |
+| Extract the ripper | Enter |  |
+| Select a ripper | Click it |  |
+| Move the ripper | Drag inside the ripper |  |
+| Move a corner | Drag a corner |  |
+| Scale the ripper | ⌘/Ctrl + drag a corner |  |
+| Bend an edge | ⌘/Ctrl + drag an edge |  |
+| Reshape a curve | Drag a curve handle |  |
+| Remove a curve | Double-click a curve handle |  |
+| Add/remove a corner | ⇧ + click a corner |  |
+| Move selected corners | Drag a selected corner |  |
+| Marquee-select corners | ⇧ + drag empty canvas |  |
+| Move a source image | ⇧ + drag the image |  |
 
-> Cmd/Ctrl-scaling or moving the ripper transforms any curve control points along
-> with the corners, so curved edges keep their shape.
+> Cmd/Ctrl-scaling or moving the ripper transforms any curve control points along with the corners, so curved edges keep their shape.
 
-### Atlas workspace
+### Atlas
 
-| Action | Shortcut |
-| --- | --- |
-| Apply texture adjustments to the selected texture | S |
-| Move a texture | Drag the texture (snaps to neighbours' edges) |
-| Resize a texture | Drag a corner handle |
-| Delete the selected texture | Delete / Backspace |
-| Toggle conserve vs. rectify on a curved texture | Right-click the texture |
+| Action | Shortcut | Demo |
+| --- | --- | --- |
+| Apply adjustments | S |  |
+| Select a texture | Click it |  |
+| Move a texture | Drag the texture |  |
+| Resize a texture | Drag a corner |  |
+| Resize one side | Drag an edge |  |
+| Resize proportionally | ⇧ + drag a corner |  |
+| Rotate a texture | Drag the rotation handle |  |
+| Snap rotation to 45° | ⇧ + drag the rotation handle |  |
+| Delete the texture | Delete, or Backspace |  |
+| Toggle conserve / rectify | Right-click the texture |  |
+<!-- SHORTCUTS:END -->
 
 ## Project structure
 

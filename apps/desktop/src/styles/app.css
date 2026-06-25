@@ -124,14 +124,37 @@ svg {
 .app__toolbar {
   display: flex;
   gap: 4px;
+  /* Stretch to the full bar height so flat buttons fill it edge to edge. */
+  align-self: stretch;
+  margin-right: -6px;
   /* Keep the controls clickable inside the draggable title bar. */
   -webkit-app-region: no-drag;
 }
 
+/* Flat header button that sits inside the dark top bar instead of reading as a
+   raised toolbar button. */
 .icon-button {
-  width: 24px;
-  min-height: 22px;
+  width: 28px;
+  min-height: 0;
+  align-self: stretch;
   padding: 0;
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+  color: var(--ink-muted);
+  font-size: 13px;
+  text-shadow: 1px 1px 0 #000;
+}
+
+.icon-button:hover:not(:disabled) {
+  background: rgba(239, 229, 199, 0.14);
+  color: var(--ink);
+}
+
+.icon-button:active:not(:disabled) {
+  transform: none;
+  box-shadow: none;
+  background: rgba(239, 229, 199, 0.22);
 }
 
 /* Tiled workspace: a CSS grid that fills the stage. Panels snap into named
@@ -1419,4 +1442,192 @@ svg {
 .context-menu button:hover {
   background: var(--accent-2);
   color: var(--black);
+}
+
+/* Shortcuts overlay -------------------------------------------------------- */
+
+.shortcuts-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  -webkit-app-region: no-drag;
+}
+
+.shortcuts-overlay__backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(8, 9, 8, 0.6);
+}
+
+.shortcuts-modal {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: min(460px, 92vw);
+  height: min(560px, 86vh);
+  background: var(--panel);
+  border: 1px solid var(--black);
+  box-shadow: 4px 4px 0 rgba(8, 9, 8, 0.5);
+}
+
+/* Title bar mirrors the app header. */
+.shortcuts-modal__header {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 8px;
+  height: 28px;
+  padding: 0 6px;
+  background: #242524;
+  border-bottom: 2px solid #0c0d0c;
+}
+
+.shortcuts-modal__header h2 {
+  margin: 0;
+  font-size: 13px;
+  text-shadow: 1px 1px 0 #000;
+}
+
+.shortcuts-modal__hint {
+  color: var(--ink-muted);
+  font-size: 10px;
+}
+
+/* Flat close button that sits inside the dark title bar instead of reading as a
+   raised toolbar button. */
+.shortcuts-modal__close {
+  min-height: 0;
+  align-self: stretch;
+  width: 30px;
+  margin: 0 -6px 0 0;
+  padding: 0;
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+  color: var(--ink-muted);
+}
+
+.shortcuts-modal__close:hover:not(:disabled) {
+  background: var(--accent);
+  color: var(--ink);
+}
+
+.shortcuts-modal__close:active:not(:disabled) {
+  transform: none;
+  box-shadow: none;
+}
+
+.shortcuts-list {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 8px;
+}
+
+.shortcuts-group + .shortcuts-group {
+  margin-top: 12px;
+}
+
+.shortcuts-group h3 {
+  margin: 0 0 4px;
+  font-size: 11px;
+  text-shadow: 1px 1px 0 #000;
+}
+
+.shortcuts-group ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.shortcuts-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 5px 6px;
+  /* Actions sit muted under the brighter section titles; the hovered row
+     brightens for feedback. */
+  color: var(--ink-muted);
+}
+
+.shortcuts-row:hover {
+  background: var(--panel-dark);
+  color: var(--ink);
+}
+
+.shortcuts-row__keys {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 4px;
+  flex-shrink: 0;
+  max-width: 52%;
+}
+
+.shortcuts-combo {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.shortcuts-sep {
+  color: var(--ink-muted);
+}
+
+.shortcuts-row kbd {
+  font: inherit;
+  font-size: 10px;
+  line-height: 1;
+  padding: 3px 5px;
+  background: #cfc8b8;
+  color: #24231f;
+  border: 1px solid var(--black);
+  white-space: nowrap;
+}
+
+/* Demo clip that floats beside the cursor; never intercepts pointer events so it
+   can't steal the hover from the row underneath it. */
+.shortcuts-float {
+  position: fixed;
+  z-index: 61;
+  pointer-events: none;
+  padding: 4px;
+  background: var(--panel);
+  border: 1px solid var(--black);
+  box-shadow: 3px 3px 0 rgba(8, 9, 8, 0.5);
+}
+
+.shortcuts-demo__frame {
+  position: relative;
+  aspect-ratio: 4 / 3;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-deep);
+  border: 1px solid var(--black);
+  overflow: hidden;
+}
+
+/* The recorded clip sits on top of (and hides) the shader placeholder. */
+.shortcuts-demo__gif {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  background: var(--bg-deep);
+}
+
+.shortcuts-demo__placeholder {
+  position: absolute;
+  bottom: 6px;
+  padding: 2px 6px;
+  background: rgba(8, 9, 8, 0.65);
+  color: var(--ink-muted);
+  font-size: 10px;
 }

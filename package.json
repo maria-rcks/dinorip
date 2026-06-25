@@ -3,7 +3,11 @@
   "private": true,
   "packageManager": "pnpm@11.8.0",
   "scripts": {
+    "gen:shortcuts": "node scripts/generate-readme-shortcuts.mjs",
+    "gen:shortcuts:check": "node scripts/generate-readme-shortcuts.mjs --check",
+    "predev": "pnpm gen:shortcuts",
     "dev": "pnpm --filter @dinorip/core build && pnpm --filter @dinorip/ipc-contracts build && pnpm --filter @dinorip/desktop dev",
+    "prebuild": "pnpm gen:shortcuts",
     "build": "pnpm -r --sort build",
     "typecheck": "pnpm -r --sort typecheck",
     "test": "pnpm -r --if-present test",
