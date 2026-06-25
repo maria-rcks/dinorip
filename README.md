@@ -2,19 +2,19 @@
 
 # 🦖 DinoRip
 
-**A texture ripper & seamless-tile workshop for game artists.**
+**A texture ripper & atlas workshop for game artists.**
 
 ![DinoRip screenshot](assets/screenshot.png)
 
 </div>
 
-DinoRip lets you rip textures out of reference photos and turn them into clean,
-tiling texture atlases. Place a perspective ripper over the geometry in an image,
+DinoRip lets you rip textures out of reference photos and turn them into clean
+texture atlases. Place a perspective ripper over the geometry in an image,
 extract the surface into the atlas workspace, adjust it, and export a single
 texture file, all in a fast, pixel-styled desktop UI.
 
-It is a clean-room Electron + TypeScript rebuild of a classic texture
-ripper / seamless-maker workflow.
+It is a clean-room Electron + TypeScript rebuild of a classic texture ripper
+workflow.
 
 ## Features
 
@@ -27,8 +27,6 @@ ripper / seamless-maker workflow.
   them as a single atlas file.
 - **Texture options**: brightness, contrast, saturation, hue shift, grayscale,
   invert, and sharpen, applied across one or all textures.
-- **Seamless tiling**: Smoothed Collage and Scattered Edges seam generation with
-  a tiled live preview.
 - **Export**: export the selected texture, export all textures, or export the
   full atlas as PNG.
 
@@ -90,7 +88,7 @@ ripper / seamless-maker workflow.
 
 | Path | Description |
 | --- | --- |
-| `packages/core` | Pure TypeScript: image models, bilinear sampling, perspective extraction, seamless processing, flip/resize, atlas rasterization. |
+| `packages/core` | Pure TypeScript: image models, bilinear sampling, perspective extraction, flip/resize, atlas rasterization. |
 | `packages/ipc-contracts` | Typed IPC channels and shared constants. |
 | `apps/desktop` | Electron main/preload, React + Vite renderer, Canvas workspaces, worker processing, and electron-builder config. |
 
