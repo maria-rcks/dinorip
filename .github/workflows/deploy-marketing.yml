@@ -1,0 +1,28 @@
+name: Deploy marketing
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "apps/marketing/**"
+      - ".github/workflows/deploy-marketing.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-marketing
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Deploy to Lakebed
+        env:
+          LAKEBED_TOKEN: ${{ secrets.LAKEBED_TOKEN }}
+        run: npx -y lakebed@latest deploy apps/marketing

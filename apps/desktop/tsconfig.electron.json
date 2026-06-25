@@ -1,0 +1,19 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "module": "CommonJS",
+    "moduleResolution": "Node",
+    "lib": ["ES2022"],
+    "types": ["node", "electron"],
+    "outDir": "dist-electron",
+    "rootDir": "electron",
+    "baseUrl": ".",
+    "paths": {
+      "@dinorip/ipc-contracts": ["../../packages/ipc-contracts/dist/index.d.ts"],
+      "@dinorip/core": ["../../packages/core/dist/index.d.ts"]
+    },
+    "isolatedModules": false,
+    "noEmit": false
+  },
+  "include": ["electron/**/*.ts"]
+}
