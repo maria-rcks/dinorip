@@ -1,0 +1,35 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Lakebed
+.lakebed/
+.env.lakebed.server
+
+# Build output
+dist/
+dist-electron/
+packages/*/dist/
+*.tsbuildinfo
+
+# Packaged app (electron-builder)
+release/
+
+# Test coverage
+coverage/
+
+# Logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+# Editor / OS
+.DS_Store
+.idea/
+.vscode/
+*.swp
+
+# Env
+.env
+.env.local
+.env.*.local

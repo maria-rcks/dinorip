@@ -1,0 +1,1379 @@
+:root {
+  --pixel-font: "Silkscreen", "Press Start 2P", "Pixel Operator", "Chicago", "Monaco", "Menlo", monospace;
+  --bg: #1b1d1c;
+  --bg-deep: #121312;
+  --panel: #4b4b43;
+  --panel-dark: #32342f;
+  --panel-light: #d8d1bf;
+  --ink: #ece6d0;
+  --ink-muted: #a69e8d;
+  --black: #080908;
+  --accent: #e8563f;
+  --accent-2: #efe5c7;
+  --grid-strong: rgba(8, 9, 8, 0.6);
+  color: var(--ink);
+  background: var(--bg);
+  font-family: var(--pixel-font);
+  font-size: 14px;
+  font-synthesis: none;
+}
+
+* {
+  box-sizing: border-box;
+  image-rendering: pixelated;
+}
+
+body {
+  margin: 0;
+  overflow: hidden;
+  background: var(--bg-deep);
+}
+
+button,
+input,
+select {
+  font: inherit;
+}
+
+button,
+input,
+select {
+  border-radius: 0;
+}
+
+button {
+  min-height: 28px;
+  border: 2px solid var(--black);
+  border-top-color: #eee5cb;
+  border-left-color: #eee5cb;
+  background: #cfc8b8;
+  color: #24231f;
+  padding: 0 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  cursor: pointer;
+  box-shadow: inset -2px -2px 0 #8a8376, inset 1px 1px 0 #fff8df;
+  text-transform: none;
+  white-space: nowrap;
+}
+
+button:hover:not(:disabled) {
+  background: #efe5c7;
+  color: #111;
+}
+
+button:active:not(:disabled) {
+  border-color: var(--black);
+  box-shadow: inset 2px 2px 0 #8a8376;
+  transform: translate(1px, 1px);
+}
+
+button:disabled,
+input:disabled,
+select:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+svg {
+  stroke-width: 3;
+}
+
+.app {
+  height: 100vh;
+  display: grid;
+  grid-template-rows: 28px 1fr;
+  background: var(--bg-deep);
+}
+
+.app__header {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 12px;
+  padding: 0 6px;
+  background: #242524;
+  border-bottom: 2px solid #0c0d0c;
+  color: var(--ink);
+  /* The header doubles as the window title bar now that native chrome is hidden. */
+  -webkit-app-region: drag;
+}
+
+/* Reserve room for the macOS traffic lights inset into the header. */
+.app--mac .app__header {
+  padding-left: 78px;
+}
+
+.app__header h1 {
+  margin: 0;
+  font-size: 13px;
+  letter-spacing: 0;
+  text-shadow: 1px 1px 0 #000;
+}
+
+.app__status {
+  min-width: 0;
+  color: var(--ink-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.app__toolbar {
+  display: flex;
+  gap: 4px;
+  /* Keep the controls clickable inside the draggable title bar. */
+  -webkit-app-region: no-drag;
+}
+
+.icon-button {
+  width: 24px;
+  min-height: 22px;
+  padding: 0;
+}
+
+/* Tiled workspace: a CSS grid that fills the stage. Panels snap into named
+   slots; there are no free-floating frames. Default arrangement: two tiles on
+   top (slot0 | slot1) with a full-width tile below (slot2). */
+.app__tiles {
+  --split-x: 50%;
+  --split-y: 66%;
+  --stack-split-y: 50%;
+  position: relative;
+  min-height: 0;
+  overflow: hidden;
+  display: grid;
+  gap: 0;
+  padding: 0;
+  grid-template-columns: minmax(0, var(--split-x)) minmax(0, 1fr);
+  grid-template-rows: minmax(0, var(--split-y)) minmax(0, 1fr);
+  grid-template-areas:
+    "slot0 slot1"
+    "slot2 slot2";
+  background: #101110;
+}
+
+.app__tiles--span-left,
+.app__tiles--span-right {
+  grid-template-columns: minmax(0, var(--split-x)) minmax(0, 1fr);
+  grid-template-rows: minmax(0, var(--stack-split-y)) minmax(0, 1fr);
+}
+
+.app__tiles--span-left {
+  grid-template-areas:
+    "focus stackA"
+    "focus stackB";
+}
+
+.app__tiles--span-right {
+  grid-template-areas:
+    "stackA focus"
+    "stackB focus";
+}
+
+.app__tiles--resizing,
+.app__tiles--resizing * {
+  user-select: none;
+}
+
+.app__tiles--resizing-x,
+.app__tiles--resizing-x * {
+  cursor: ew-resize !important;
+}
+
+.app__tiles--resizing-y,
+.app__tiles--resizing-y *,
+.app__tiles--resizing-stackY,
+.app__tiles--resizing-stackY * {
+  cursor: ns-resize !important;
+}
+
+.tiled-panel {
+  position: relative;
+  min-width: 0;
+  min-height: 0;
+  display: block;
+  background: var(--panel);
+  border: 1px solid var(--black);
+  z-index: 1;
+  /* Query container so headings scale in cqw, matching the Seam Options title. */
+  container-type: inline-size;
+}
+
+.tiled-panel--active {
+  outline: 2px solid rgba(239, 229, 199, 0.85);
+  outline-offset: -4px;
+}
+
+.tiled-panel--dragging {
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.tiled-panel--drop {
+  filter: brightness(0.72);
+}
+
+/* Floating pixel heading: title + blurb sitting directly over the work area,
+   with no background plate. Only the title row is draggable / hit-testable so
+   the rest of the canvas stays interactive underneath the text. */
+.tiled-panel__heading {
+  position: absolute;
+  top: 8px;
+  left: 10px;
+  z-index: 6;
+  max-width: min(64%, 480px);
+  display: flex;
+  flex-direction: column;
+  gap: 0.4cqw;
+  pointer-events: none;
+  user-select: none;
+}
+
+.tiled-panel__title {
+  display: inline-flex;
+  align-items: center;
+  align-self: flex-start;
+  gap: 0.9cqw;
+  max-width: 100%;
+  color: var(--ink);
+  pointer-events: auto;
+  cursor: grab;
+  touch-action: none;
+}
+
+.tiled-panel__title:active {
+  cursor: grabbing;
+}
+
+.tiled-panel__title h2 {
+  margin: 0;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 2.5cqw;
+  letter-spacing: 0.04cqw;
+  text-transform: none;
+  text-shadow: 0.12cqw 0.12cqw 0 #000;
+}
+
+.panel-glyph {
+  flex: 0 0 auto;
+  width: 2.5cqw;
+  height: 2.5cqw;
+  color: var(--ink);
+  filter: drop-shadow(0.1cqw 0.1cqw 0 #000);
+}
+
+.tiled-panel__desc {
+  margin: 0;
+  max-width: 100%;
+  color: var(--ink-muted);
+  opacity: 0.62;
+  font-size: 1.35cqw;
+  line-height: 1.5;
+  text-shadow: 0.08cqw 0.08cqw 0 rgba(0, 0, 0, 0.55);
+}
+
+.pixel-check {
+  width: 12px;
+  height: 12px;
+  flex: 0 0 auto;
+  background:
+    linear-gradient(90deg, var(--ink) 50%, transparent 50%) 0 0 / 6px 6px,
+    linear-gradient(90deg, transparent 50%, var(--ink) 50%) 0 6px / 6px 6px;
+  border: 1px solid #000;
+}
+
+.panel-grip {
+  margin-left: 2px;
+  color: var(--ink-muted);
+  font-size: 11px;
+}
+
+.tiled-panel__body {
+  height: 100%;
+  min-height: 0;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.tile-extend-handle {
+  /* Fixed default layout: no edge handles for extending/spanning panels. */
+  display: none;
+  position: absolute;
+  z-index: 7;
+  min-height: 0;
+  width: auto;
+  height: auto;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  opacity: 0.45;
+}
+
+.tile-extend-handle:hover:not(:disabled),
+.tile-extend-handle:active:not(:disabled) {
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  transform: none;
+}
+
+.tile-extend-handle:hover,
+.tiled-panel:hover .tile-extend-handle,
+.tiled-panel--active .tile-extend-handle {
+  opacity: 1;
+}
+
+.tile-extend-handle::after {
+  content: "";
+  position: absolute;
+  background:
+    linear-gradient(90deg, var(--accent-2) 50%, var(--black) 50%) 0 0 / 4px 4px,
+    var(--accent);
+  border: 1px solid var(--black);
+  box-shadow: 1px 1px 0 rgba(0, 0, 0, 0.7);
+}
+
+.tile-extend-handle--left,
+.tile-extend-handle--right {
+  top: 26px;
+  bottom: 8px;
+  width: 12px;
+  cursor: ew-resize;
+}
+
+.tile-extend-handle--left {
+  left: -6px;
+}
+
+.tile-extend-handle--right {
+  right: -6px;
+}
+
+.tile-extend-handle--left::after,
+.tile-extend-handle--right::after {
+  top: 50%;
+  left: 3px;
+  width: 6px;
+  height: 42px;
+  transform: translateY(-50%);
+}
+
+.tile-drop-preview {
+  min-width: 0;
+  min-height: 0;
+  display: grid;
+  grid-template-rows: 22px 1fr;
+  border: 2px dashed var(--accent);
+  background: rgba(232, 86, 63, 0.22);
+  box-shadow: inset 0 0 0 2px rgba(239, 229, 199, 0.45);
+  pointer-events: none;
+  z-index: 8;
+}
+
+.tile-drop-preview__titlebar,
+.tile-drag-ghost__titlebar {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 22px;
+  padding: 0 6px;
+  color: var(--ink);
+  background: #272827;
+  border-bottom: 2px solid var(--black);
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.tile-drop-preview__titlebar span:last-child,
+.tile-drag-ghost__titlebar span:last-child {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-shadow: 1px 1px 0 #000;
+}
+
+.tile-drop-preview__body,
+.tile-drag-ghost__body {
+  background:
+    linear-gradient(90deg, rgba(239, 229, 199, 0.32) 50%, transparent 50%) 0 0 / 12px 12px,
+    linear-gradient(rgba(0, 0, 0, 0.28) 50%, transparent 50%) 0 0 / 12px 12px,
+    #4b4b43;
+}
+
+.tile-drop-preview__body {
+  opacity: 0.72;
+}
+
+.tile-drag-ghost {
+  position: fixed;
+  left: 0;
+  top: 0;
+  z-index: 10000;
+  width: 168px;
+  height: 96px;
+  display: grid;
+  grid-template-rows: 22px 1fr;
+  border: 2px solid var(--black);
+  background: var(--panel);
+  box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.58);
+  pointer-events: none;
+  image-rendering: pixelated;
+  will-change: transform;
+}
+
+.tile-drag-ghost__body {
+  position: relative;
+}
+
+.tile-drag-ghost__body::after {
+  content: "";
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  bottom: 12px;
+  height: 12px;
+  background:
+    linear-gradient(90deg, #efe5c7 50%, transparent 50%) 0 0 / 8px 8px,
+    #2b2d2a;
+  border: 2px solid var(--black);
+}
+
+.panel-canvas-stack {
+  position: relative;
+  height: 100%;
+  min-height: 0;
+}
+
+.panel-canvas-stack .workspace {
+  height: 100%;
+  padding-bottom: 38px;
+}
+
+.workspace {
+  min-width: 0;
+  min-height: 0;
+  display: grid;
+  grid-template-rows: 28px 1fr;
+  background: #363a38;
+  overflow: hidden;
+}
+
+.workspace--no-header {
+  grid-template-rows: 1fr;
+}
+
+.workspace__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 0 6px;
+  background: #282a28;
+  border-bottom: 2px solid #101110;
+}
+
+.workspace__header h2,
+.panel-section h2 {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0;
+}
+
+.workspace__header span {
+  color: var(--ink-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.workspace__canvas {
+  min-width: 0;
+  min-height: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  touch-action: none;
+  cursor: grab;
+}
+
+.panel-toolbar {
+  position: absolute;
+  left: 6px;
+  right: 6px;
+  bottom: 5px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  pointer-events: none;
+}
+
+.layout-splitter {
+  /* Draggable seam between panels: grab it to adjust panel sizes. The visible
+     grip stays subtle (shown on hover) — the chunky extend handles are hidden. */
+  position: absolute;
+  z-index: 12;
+  min-width: 0;
+  min-height: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  opacity: 1;
+}
+
+.layout-splitter:hover:not(:disabled),
+.layout-splitter:active:not(:disabled) {
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  transform: none;
+}
+
+.layout-splitter::after {
+  content: "";
+  position: absolute;
+  opacity: 0;
+  background:
+    linear-gradient(90deg, var(--ink) 50%, transparent 50%) 0 0 / 4px 4px,
+    var(--accent-2);
+  border: 1px solid var(--black);
+  box-shadow: 1px 1px 0 rgba(0, 0, 0, 0.65);
+  transition: opacity 80ms linear;
+}
+
+.layout-splitter:hover::after,
+.layout-splitter:active::after,
+.app__tiles--resizing .layout-splitter::after {
+  opacity: 0.92;
+}
+
+.layout-splitter--vertical {
+  top: 0;
+  left: calc(var(--split-x) - 4px);
+  width: 8px;
+  height: var(--split-y);
+  cursor: ew-resize;
+}
+
+.app__tiles--span-left .layout-splitter--vertical,
+.app__tiles--span-right .layout-splitter--vertical {
+  height: 100%;
+}
+
+.layout-splitter--vertical::after {
+  top: 0;
+  bottom: 0;
+  left: 3px;
+  width: 2px;
+}
+
+.layout-splitter--horizontal {
+  top: calc(var(--split-y) - 4px);
+  left: 0;
+  right: 0;
+  height: 8px;
+  cursor: ns-resize;
+}
+
+.layout-splitter--stack {
+  top: calc(var(--stack-split-y) - 4px);
+  height: 8px;
+  cursor: ns-resize;
+}
+
+.app__tiles--span-left .layout-splitter--stack {
+  left: var(--split-x);
+  right: 0;
+}
+
+.app__tiles--span-right .layout-splitter--stack {
+  left: 0;
+  right: calc(100% - var(--split-x));
+}
+
+.layout-splitter--horizontal::after,
+.layout-splitter--stack::after {
+  top: 3px;
+  left: 0;
+  right: 0;
+  height: 2px;
+}
+
+.panel-toolbar--right {
+  justify-content: flex-end;
+}
+
+.panel-toolbar button {
+  pointer-events: auto;
+  min-height: 26px;
+  padding: 0 9px;
+  font-size: 11px;
+}
+
+/* Atlas toolbar: size changer pinned bottom-left, exports bottom-right. */
+.panel-toolbar--split {
+  justify-content: space-between;
+}
+
+.atlas-size {
+  pointer-events: auto;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.atlas-size__field {
+  width: 54px;
+  min-height: 26px;
+  padding: 0 5px;
+  border: 2px solid var(--black);
+  background: #d7cdbc;
+  color: #24231f;
+  text-align: center;
+  font-size: 11px;
+  box-shadow: inset 1px 1px 0 #fff8df, inset -2px -2px 0 #8a8376;
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+
+.atlas-size__field::-webkit-outer-spin-button,
+.atlas-size__field::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.atlas-size__x {
+  color: var(--ink-muted);
+  font-size: 11px;
+}
+
+.atlas-size__square {
+  width: 28px;
+  padding: 0;
+}
+
+.atlas-size__square span {
+  display: block;
+  width: 12px;
+  height: 12px;
+  border: 2px solid #24231f;
+  background: transparent;
+}
+
+.atlas-size__square.is-active span {
+  background: #24231f;
+}
+
+.atlas-exports {
+  pointer-events: auto;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.side-panel {
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+  overflow: auto;
+  background: #d8d1bf;
+  color: #28251f;
+  display: grid;
+  grid-template-columns: 150px minmax(220px, 1fr);
+  grid-auto-rows: min-content;
+  gap: 6px;
+  /* Extra top padding clears the embedded "Seam Options" pixel heading. */
+  padding: 30px 8px 8px;
+}
+
+.panel-section {
+  min-width: 0;
+  padding: 6px;
+  border: 2px solid #1a1a17;
+  background: #c9c1af;
+  box-shadow: inset 2px 2px 0 #f0e7cf, inset -2px -2px 0 #8d8577;
+}
+
+.panel-section h2 {
+  margin-bottom: 6px;
+}
+
+.panel-section--size {
+  grid-column: 1 / -1;
+}
+
+.panel-section--preview {
+  grid-column: 1;
+  min-height: 140px;
+}
+
+.panel-section--transform {
+  grid-column: 2;
+  display: grid;
+  gap: 6px;
+}
+
+.panel-section--seam {
+  grid-column: 2;
+  display: grid;
+  gap: 6px;
+}
+
+.size-row {
+  display: grid;
+  grid-template-columns: 70px 70px auto;
+  gap: 6px;
+}
+
+.size-row input,
+.field input,
+.field select {
+  min-width: 0;
+  width: 100%;
+  min-height: 25px;
+  border: 2px solid #1a1a17;
+  padding: 0 5px;
+  background: #efe5c7;
+  color: #2a271f;
+  box-shadow: inset 2px 2px 0 #9e9686;
+}
+
+.preview-canvas {
+  width: 100%;
+  aspect-ratio: 1;
+  display: block;
+  border: 2px solid #1a1a17;
+  background: #31342f;
+  touch-action: none;
+}
+
+.field {
+  display: grid;
+  grid-template-columns: 132px minmax(90px, 1fr);
+  align-items: center;
+  gap: 6px;
+}
+
+.field span,
+.toggle span {
+  color: #2b2822;
+  min-width: 0;
+}
+
+.field--slider {
+  grid-template-columns: 132px minmax(90px, 1fr) 38px;
+}
+
+.field--compact {
+  grid-template-columns: 52px minmax(70px, 1fr);
+}
+
+.field--slider input {
+  padding: 0;
+  accent-color: #3f3e37;
+}
+
+.field--slider output {
+  text-align: right;
+  color: #4d473d;
+  font-variant-numeric: tabular-nums;
+}
+
+.toggle {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 25px;
+}
+
+.toggle input {
+  width: 16px;
+  height: 16px;
+  accent-color: #3f3e37;
+}
+
+.transform-fields {
+  display: grid;
+  gap: 5px;
+}
+
+.atlas-controls {
+  display: grid;
+  grid-template-columns: repeat(6, 28px) minmax(72px, 1fr);
+  gap: 4px;
+  align-items: center;
+}
+
+.pixel-control {
+  width: 28px;
+  min-height: 28px;
+  padding: 0;
+}
+
+.apply-button {
+  margin-top: 2px;
+  width: 100%;
+  background: #2a2926;
+  color: #efe5c7;
+  border-top-color: #7d766b;
+  border-left-color: #7d766b;
+}
+
+.apply-button:hover:not(:disabled) {
+  background: #3a3832;
+  color: #fff4d7;
+}
+
+/* ----------------------------------------------------------------------------
+   Seam Options panel. Rebuilt to match the reference mock exactly: a fixed
+   2.25:1 card that scales proportionally (container-query units) so it reads
+   identically at any tile size and never stretches. The "tools" tile drops its
+   draggable heading and extend handles so the card owns the whole frame.
+---------------------------------------------------------------------------- */
+.tiled-panel[data-panel-id="tools"] > .tiled-panel__heading,
+.tiled-panel[data-panel-id="tools"] > .tile-extend-handle {
+  display: none;
+}
+
+.tiled-panel[data-panel-id="tools"].tiled-panel--active {
+  outline: none;
+}
+
+.seam-options {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  background: #c4bca6;
+  container-type: size;
+  overflow: hidden;
+}
+
+.seam-options__frame {
+  width: 100%;
+  height: 100%;
+  container-type: inline-size;
+  display: flex;
+  flex-direction: column;
+  background: #c4bca6;
+  color: #2a261d;
+  overflow: hidden;
+}
+
+/* Title bar ------------------------------------------------------------------ */
+.seam-options__title {
+  display: flex;
+  align-items: center;
+  gap: 1.6cqw;
+  height: 4.1cqw;
+  padding: 0 1.6cqw 0 2cqw;
+  background: #1b1a16;
+  color: #ece4cd;
+}
+
+.seam-options__title-text {
+  font-size: 2.5cqw;
+  letter-spacing: 0.05cqw;
+  text-shadow: 0.12cqw 0.12cqw 0 #000;
+  white-space: nowrap;
+}
+
+.seam-options__title-dots {
+  flex: 1;
+  height: 0.7cqw;
+  background: repeating-linear-gradient(90deg, #7d7560 0 0.28cqw, transparent 0.28cqw 0.85cqw);
+}
+
+/* Body ----------------------------------------------------------------------- */
+.seam-options__body {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  gap: 1.7cqw;
+  padding: 1.6cqw;
+}
+
+.seam-options__preview {
+  flex: 0 0 auto;
+  align-self: stretch;
+  aspect-ratio: 1;
+  border: 0.34cqw solid #14130d;
+  box-shadow: inset 0.2cqw 0.2cqw 0 #5d5d57, inset -0.2cqw -0.2cqw 0 #14130d;
+  background: #2e2e2e;
+  overflow: hidden;
+}
+
+.seam-shader {
+  display: block;
+  width: 100%;
+  height: 100%;
+  /* Smoothly (bilinearly) upscale the low-res shader buffer. */
+  image-rendering: auto;
+}
+
+.texture-preview {
+  display: block;
+  width: 100%;
+  height: 100%;
+  touch-action: none;
+  /* Smooth scaling so detailed textures resize cleanly in the preview. */
+  image-rendering: auto;
+}
+
+.seam-options__controls {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1cqw;
+}
+
+/* Tab bar (lives in the panel title bar, right-aligned) ---------------------- */
+.seam-tabs {
+  display: flex;
+  align-items: center;
+  gap: 0.5cqw;
+  flex: 0 0 auto;
+}
+
+.seam-tab {
+  height: 2.9cqw;
+  padding: 0 0.9cqw;
+  font-size: 1.45cqw;
+  letter-spacing: 0.04cqw;
+  /* Seamless in the title bar: no chrome, just muted text that lives on the bar. */
+  color: #6f6855;
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+  cursor: pointer;
+}
+
+.seam-tab:hover:not(.seam-tab--active) {
+  color: #b8af96;
+}
+
+/* Active tab: brighten the text only, marked by a thin underline. */
+.seam-tab--active {
+  color: #f3ead0;
+  box-shadow: inset 0 -0.34cqw 0 -0.04cqw #c98a4a;
+}
+
+/* Tab panel: the scrollable container for each tab's controls. ---------------- */
+.seam-tabpanel {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.9cqw;
+  padding: 1cqw;
+  background: #bcb398;
+  border: 0.28cqw solid #14130d;
+  box-shadow: inset 0.2cqw 0.2cqw 0 #d6cdb2, inset -0.2cqw -0.2cqw 0 #8d856f;
+}
+
+/* Pixel slider --------------------------------------------------------------- */
+.pslider {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: 3.4cqw;
+  flex: 0 0 auto;
+  border: 0.3cqw solid #14130d;
+  background: #e6dcc0;
+  box-shadow: inset 0.16cqw 0.16cqw 0 #f5eed7;
+  cursor: ew-resize;
+  overflow: hidden;
+}
+
+.pslider__fill {
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  background: #f7f0da;
+  z-index: 1;
+}
+
+.pslider__track {
+  position: absolute;
+  top: 50%;
+  left: 0.7cqw;
+  right: 0.7cqw;
+  height: 0.34cqw;
+  transform: translateY(-50%);
+  background: repeating-linear-gradient(90deg, #6f6855 0 0.28cqw, transparent 0.28cqw 0.92cqw);
+  z-index: 2;
+}
+
+.pslider__label {
+  position: absolute;
+  top: 50%;
+  left: 0.85cqw;
+  transform: translateY(-50%);
+  z-index: 3;
+  font-size: 1.72cqw;
+  color: #221f17;
+  white-space: nowrap;
+  pointer-events: none;
+  text-shadow: 0.1cqw 0.1cqw 0 rgba(247, 240, 218, 0.6);
+}
+
+/* Live numeric readout on the right of every slider. */
+.pslider__value {
+  position: absolute;
+  top: 50%;
+  right: 0.85cqw;
+  transform: translateY(-50%);
+  z-index: 3;
+  font-size: 1.72cqw;
+  color: #14130d;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  pointer-events: none;
+  text-shadow: 0.1cqw 0.1cqw 0 rgba(247, 240, 218, 0.85);
+}
+
+.pslider input[type="range"] {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  opacity: 0;
+  cursor: inherit;
+  z-index: 4;
+}
+
+.pslider--disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Lower region: checkboxes | divider | actions ------------------------------- */
+.seam-options__lower {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  gap: 1.3cqw;
+}
+
+.seam-checks {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 0.7cqw;
+}
+
+.pcheck {
+  display: flex;
+  align-items: center;
+  gap: 0.9cqw;
+  font-size: 1.62cqw;
+  color: #221f17;
+  cursor: pointer;
+}
+
+.pcheck input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.pcheck__box {
+  position: relative;
+  flex: 0 0 auto;
+  width: 1.8cqw;
+  height: 1.8cqw;
+  border: 0.3cqw solid #14130d;
+  background: #ece2c6;
+  box-shadow: inset 0.14cqw 0.14cqw 0 #f7f0da;
+}
+
+/* On state: fill the box dark with a small inset so it reads clearly as a
+   pressed/checked pixel control, plus a bright checkmark. */
+.pcheck input:checked + .pcheck__box {
+  background: #14130d;
+  box-shadow: inset 0.18cqw 0.18cqw 0 #4a4636;
+}
+
+.pcheck input:checked + .pcheck__box::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 44%;
+  width: 0.45cqw;
+  height: 0.95cqw;
+  transform: translate(-50%, -50%) rotate(45deg);
+  border: solid #f3ead0;
+  border-width: 0 0.34cqw 0.34cqw 0;
+}
+
+.pcheck input:focus-visible + .pcheck__box {
+  outline: 0.2cqw solid #8a5a3a;
+  outline-offset: 0.1cqw;
+}
+
+.pcheck--disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.seam-divider {
+  flex: 0 0 0.34cqw;
+  align-self: stretch;
+  background: repeating-linear-gradient(180deg, #6f6855 0 0.34cqw, transparent 0.34cqw 1cqw);
+}
+
+.seam-actions {
+  flex: 1.15;
+  display: flex;
+  flex-direction: column;
+  gap: 0.85cqw;
+}
+
+.seam-select {
+  position: relative;
+}
+
+.seam-select::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  right: 1cqw;
+  width: 0;
+  height: 0;
+  transform: translateY(-30%);
+  border-left: 0.62cqw solid transparent;
+  border-right: 0.62cqw solid transparent;
+  border-top: 0.7cqw solid #4a4536;
+  pointer-events: none;
+}
+
+.seam-select select {
+  width: 100%;
+  height: 3.3cqw;
+  padding: 0 2.6cqw 0 1cqw;
+  font-size: 1.62cqw;
+  color: #221f17;
+  background: #f3ecd6;
+  border: 0.3cqw solid #14130d;
+  box-shadow: inset 0.16cqw 0.16cqw 0 #fdf8e8;
+  appearance: none;
+  -webkit-appearance: none;
+  cursor: pointer;
+}
+
+.seam-apply {
+  width: 100%;
+  min-height: 0;
+  height: 3.7cqw;
+  margin-top: 0.2cqw;
+  font-size: 1.85cqw;
+  letter-spacing: 0.12cqw;
+  color: #ece4cd;
+  background: #16140f;
+  border: 0.3cqw solid #14130d;
+  border-top-color: #4a4438;
+  border-left-color: #4a4438;
+  box-shadow: inset 0.16cqw 0.16cqw 0 rgba(255, 248, 223, 0.12), inset -0.2cqw -0.2cqw 0 rgba(0, 0, 0, 0.6);
+  text-shadow: 0.1cqw 0.1cqw 0 #000;
+}
+
+.seam-apply:hover:not(:disabled) {
+  background: #221f17;
+  color: #fff4d7;
+}
+
+.seam-apply:active:not(:disabled) {
+  transform: translate(0.1cqw, 0.1cqw);
+  box-shadow: inset 0.2cqw 0.2cqw 0 rgba(0, 0, 0, 0.6);
+}
+
+.seam-shortcut {
+  text-align: center;
+  font-size: 1.25cqw;
+  color: #8c8470;
+  text-shadow: 0.08cqw 0.08cqw 0 rgba(247, 240, 218, 0.4);
+}
+
+/* Checkbox row (used inside tab panels) -------------------------------------- */
+.seam-checks--row {
+  flex: 0 0 auto;
+  flex-direction: row;
+  flex-wrap: wrap;
+  justify-content: flex-start;
+  gap: 1.4cqw;
+  margin-top: 0.4cqw;
+}
+
+/* Labelled field (e.g. dither mode select) ----------------------------------- */
+.seam-field {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4cqw;
+}
+
+.seam-field__label {
+  font-size: 1.55cqw;
+  color: #221f17;
+  text-shadow: 0.1cqw 0.1cqw 0 rgba(247, 240, 218, 0.6);
+}
+
+.seam-hint {
+  font-size: 1.25cqw;
+  line-height: 1.4;
+  color: #6f6855;
+  text-shadow: 0.08cqw 0.08cqw 0 rgba(247, 240, 218, 0.4);
+}
+
+/* Footer: always-visible primary Apply action -------------------------------- */
+.seam-footer {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4cqw;
+}
+
+.seam-footer .seam-apply {
+  margin-top: 0;
+}
+
+/* Presets tab ---------------------------------------------------------------- */
+.seam-preset-row {
+  flex: 0 0 auto;
+  display: flex;
+  gap: 0.6cqw;
+}
+
+.seam-select--grow {
+  flex: 1;
+  min-width: 0;
+}
+
+.seam-preset-input {
+  flex: 1;
+  min-width: 0;
+  height: 3.3cqw;
+  padding: 0 1cqw;
+  font-size: 1.62cqw;
+  color: #221f17;
+  background: #f3ecd6;
+  border: 0.3cqw solid #14130d;
+  box-shadow: inset 0.16cqw 0.16cqw 0 #fdf8e8;
+}
+
+.seam-preset-input::placeholder {
+  color: #9a917a;
+}
+
+/* Pixel-art secondary button (presets / reset / apply-to-all). --------------- */
+.seam-btn {
+  flex: 0 0 auto;
+  height: 3.3cqw;
+  padding: 0 1.4cqw;
+  font-size: 1.55cqw;
+  color: #221f17;
+  background: #d8cfb2;
+  border: 0.3cqw solid #14130d;
+  box-shadow: inset 0.16cqw 0.16cqw 0 #f7f0da, inset -0.16cqw -0.16cqw 0 #9a9078;
+  cursor: pointer;
+}
+
+.seam-btn:hover:not(:disabled) {
+  background: #e6dcc0;
+}
+
+.seam-btn:active:not(:disabled) {
+  transform: translate(0.1cqw, 0.1cqw);
+  box-shadow: inset 0.18cqw 0.18cqw 0 #9a9078;
+}
+
+.seam-btn--wide {
+  width: 100%;
+}
+
+.seam-btn--danger {
+  flex: 0 0 auto;
+  color: #f3ead0;
+  background: #7a3b2a;
+  box-shadow: inset 0.16cqw 0.16cqw 0 #a35a45, inset -0.16cqw -0.16cqw 0 #4a1f15;
+}
+
+.seam-btn--danger:hover:not(:disabled) {
+  background: #8c4733;
+}
+
+.seam-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Horizontal divider variant for stacked sections. */
+.seam-divider--h {
+  flex: 0 0 0.34cqw;
+  align-self: stretch;
+  width: 100%;
+  height: 0.34cqw;
+  margin: 0.3cqw 0;
+  background: repeating-linear-gradient(90deg, #6f6855 0 0.34cqw, transparent 0.34cqw 1cqw);
+}
+
+/* Footer --------------------------------------------------------------------- */
+@media (max-width: 900px) {
+  /* Narrow viewports stack the three tiles into a single column. */
+  .app__tiles {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 0.8fr);
+    grid-template-areas:
+      "slot0"
+      "slot1"
+      "slot2";
+  }
+
+  .app__tiles--span-left,
+  .app__tiles--span-right {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: minmax(0, 1.2fr) minmax(0, 0.9fr) minmax(0, 0.9fr);
+    grid-template-areas:
+      "focus"
+      "stackA"
+      "stackB";
+  }
+
+  .layout-splitter {
+    display: none;
+  }
+
+  .side-panel {
+    grid-template-columns: 1fr;
+  }
+
+  .panel-section--size,
+  .panel-section--preview,
+  .panel-section--transform,
+  .panel-section--seam {
+    grid-column: 1;
+  }
+
+  .atlas-controls {
+    grid-template-columns: repeat(6, 24px) minmax(72px, 1fr);
+  }
+}
