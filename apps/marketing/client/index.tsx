@@ -107,6 +107,12 @@ export function App() {
       {/* ===== HERO ===== */}
       <section style="position:relative;padding:96px 24px 0;background:#171c17;background-image:linear-gradient(45deg,rgba(0,0,0,.22) 25%,transparent 25%,transparent 75%,rgba(0,0,0,.22) 75%),linear-gradient(45deg,rgba(0,0,0,.22) 25%,transparent 25%,transparent 75%,rgba(0,0,0,.22) 75%);background-size:10px 10px;background-position:0 0,5px 5px;">
         <div style="position:relative;z-index:2;max-width:1000px;margin:0 auto;text-align:center;">
+          <div style="display:inline-flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:8px 12px;background:#efe5c7;border:2px solid #000;box-shadow:inset 2px 2px 0 #fff8df,inset -3px -3px 0 #9c8f6c,4px 4px 0 #000;padding:10px 14px;color:#171c17;font-family:'Geist Pixel',sans-serif;font-size:12px;line-height:1.45;letter-spacing:1px;text-transform:uppercase;">
+            <span>DinoRip is a remake of puck_psx&apos;s original texture ripper</span>
+            <a href="https://puszke.itch.io/pucks-texture-ripper" target="_blank" rel="noopener noreferrer" style="display:inline-flex;align-items:center;background:#c46c3f;color:#fff;border:2px solid #000;box-shadow:inset 1px 1px 0 #e09666,inset -2px -2px 0 #934d28;padding:3px 9px;text-decoration:none;">
+              Buy the original version
+            </a>
+          </div>
           <h1 style="font-family:'Geist Pixel',sans-serif;font-weight:700;font-size:clamp(42px,7.4vw,86px);line-height:1.02;letter-spacing:1px;margin:24px 0 0;color:#f4ecd9;">
             Rip every <span style="color:#8fa066;">image</span><br />into clean textures.
           </h1>

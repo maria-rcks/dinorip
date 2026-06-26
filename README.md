@@ -5,6 +5,10 @@
 Desktop texture ripper for building PNG textures and texture atlases from
 reference images.
 
+> Attribution: DinoRip is a remake of puck_psx's original texture ripper.
+> Please support the original project:
+> [Buy the original version](https://puszke.itch.io/pucks-texture-ripper).
+
 ## Features
 
 - Load PNG, JPG, and JPEG source images, or paste image files from the clipboard.
