@@ -29,7 +29,7 @@ import type { LayoutResizePart, PanelId } from "./panels/usePanelLayout";
 import { AtlasToolbar, SourceToolbar } from "./panels/PixelToolbars";
 import { ShortcutsOverlay } from "./panels/ShortcutsOverlay";
 import { defaultTextureSettings, defaultViewState } from "./renderer/types";
-import type { RipperState, TextureSettings, ViewState, WorkspaceImageState } from "./renderer/types";
+import type { RipperState, TextureSettings, ViewState, WorkspaceImageState, WorkspaceKind } from "./renderer/types";
 import { cloneForState, fromIpcImage, pixelImageFromBlob, toIpcImage } from "./renderer/imageCanvas";
 import { gpuExtractPerspective, gpuExtractPerspectiveAsync, gpuRenderLivePreview, isGpuExtractAvailable } from "./renderer/gpuExtract";
 
@@ -61,6 +61,13 @@ interface HistorySnapshot {
   selectedRipperId?: string;
 }
 
+interface ImageContextMenu {
+  kind: WorkspaceKind;
+  imageId: string;
+  x: number;
+  y: number;
+}
+
 export function App(): ReactElement {
   const [sourceImages, setSourceImages] = useState<WorkspaceImageState[]>([]);
   const [atlasImages, setAtlasImages] = useState<WorkspaceImageState[]>([]);
@@ -68,8 +75,8 @@ export function App(): ReactElement {
   const [selectedSourceImageId, setSelectedSourceImageId] = useState<string | undefined>();
   const [selectedAtlasImageId, setSelectedAtlasImageId] = useState<string | undefined>();
   const [selectedRipperId, setSelectedRipperId] = useState<string | undefined>();
-  // Atlas right-click context menu (curve conserve/rectify toggle). Null = closed.
-  const [ripperMenu, setRipperMenu] = useState<{ ripperId: string; x: number; y: number } | null>(null);
+  // Right-click image menu. Atlas textures may also expose curve conserve/rectify.
+  const [imageMenu, setImageMenu] = useState<ImageContextMenu | null>(null);
   // Atlas export sizing: a manual minimum size (null = auto-fit to content) and
   // whether the export region is padded to a square.
   const [atlasManualSize, setAtlasManualSize] = useState<{ width: number; height: number } | null>(null);
@@ -148,6 +155,7 @@ export function App(): ReactElement {
     setSelectedSourceImageId(state.selectedSourceImageId);
     setSelectedAtlasImageId(state.selectedAtlasImageId);
     setSelectedRipperId(state.selectedRipperId);
+    setImageMenu(null);
   }
 
   function undo() {
@@ -235,8 +243,8 @@ export function App(): ReactElement {
         return;
       }
 
-      // Delete: remove the selected ripper if one is active, otherwise the
-      // selected atlas texture.
+      // Delete: remove the selected object. Source/atlas image selection clears
+      // competing selections, so the shortcut targets the last picked thing.
       if (event.key === "Delete" || event.key === "Backspace") {
         if (selectedRipperId) {
           event.preventDefault();
@@ -244,6 +252,9 @@ export function App(): ReactElement {
         } else if (selectedAtlasImageId) {
           event.preventDefault();
           deleteAtlasImage();
+        } else if (selectedSourceImageId) {
+          event.preventDefault();
+          deleteSourceImage();
         }
       }
     };
@@ -505,6 +516,8 @@ export function App(): ReactElement {
     ));
     setSourceImages((current) => [...current, ...workspaceImages]);
     setSelectedSourceImageId(workspaceImages[0]?.id);
+    setSelectedAtlasImageId(undefined);
+    setSelectedRipperId(undefined);
   }
 
   function addRipper() {
@@ -514,6 +527,8 @@ export function App(): ReactElement {
     const next: RipperState = { id: createId("ripper"), points: ripper.points };
     setRippers((current) => [...current, next]);
     setSelectedRipperId(next.id);
+    setSelectedSourceImageId(undefined);
+    setSelectedAtlasImageId(undefined);
     setStatus(sourceImages.length > 0 ? "Ripper added; extracting..." : "Ripper added");
   }
 
@@ -521,6 +536,7 @@ export function App(): ReactElement {
     if (!selectedRipperId) return;
     commitHistory();
     livePreviewRef.current = null;
+    setImageMenu(null);
     const ripper = rippers.find((item) => item.id === selectedRipperId);
     setRippers((current) => current.filter((item) => item.id !== selectedRipperId));
     if (ripper?.outputImageId) {
@@ -771,15 +787,26 @@ export function App(): ReactElement {
     setStatus(save.canceled ? "Atlas export canceled" : `Atlas exported ${image.width} x ${image.height}`);
   }
 
-  function deleteAtlasImage() {
-    if (!selectedAtlasImageId) return;
+  function deleteSourceImage(id = selectedSourceImageId) {
+    if (!id || !sourceImages.some((image) => image.id === id)) return;
     commitHistory();
     livePreviewRef.current = null;
-    setAtlasImages((current) => current.filter((image) => image.id !== selectedAtlasImageId));
-    setRippers((current) => current.map((ripper) => ripper.outputImageId === selectedAtlasImageId
+    setImageMenu(null);
+    setSourceImages((current) => current.filter((image) => image.id !== id));
+    if (selectedSourceImageId === id) setSelectedSourceImageId(undefined);
+    setStatus("Source image deleted");
+  }
+
+  function deleteAtlasImage(id = selectedAtlasImageId) {
+    if (!id || !atlasImages.some((image) => image.id === id)) return;
+    commitHistory();
+    livePreviewRef.current = null;
+    setImageMenu(null);
+    setAtlasImages((current) => current.filter((image) => image.id !== id));
+    setRippers((current) => current.map((ripper) => ripper.outputImageId === id
       ? { ...ripper, outputImageId: undefined }
       : ripper));
-    setSelectedAtlasImageId(undefined);
+    if (selectedAtlasImageId === id) setSelectedAtlasImageId(undefined);
     setStatus("Atlas image deleted");
   }
 
@@ -900,14 +927,47 @@ export function App(): ReactElement {
       ripper.id === ripperId ? { ...ripper, conserveShape: !(ripper.conserveShape ?? true) } : ripper));
   }
 
-  // Right-click on an atlas texture: if it belongs to a curved ripper, open the
-  // context menu offering the conserve/rectify toggle. Straight rippers have no
-  // menu (they are always rectified).
+  function selectSourceImage(id?: string) {
+    setSelectedSourceImageId(id);
+    if (id) {
+      setSelectedAtlasImageId(undefined);
+      setSelectedRipperId(undefined);
+    }
+    setImageMenu(null);
+  }
+
+  function selectAtlasImage(id?: string) {
+    setSelectedAtlasImageId(id);
+    if (id) {
+      setSelectedSourceImageId(undefined);
+      setSelectedRipperId(undefined);
+    }
+    setImageMenu(null);
+  }
+
+  function selectRipper(id?: string) {
+    setSelectedRipperId(id);
+    if (id) {
+      setSelectedSourceImageId(undefined);
+      setSelectedAtlasImageId(undefined);
+    }
+    setImageMenu(null);
+  }
+
+  function onSourceImageContextMenu(imageId: string | undefined, clientX: number, clientY: number) {
+    if (!imageId) return setImageMenu(null);
+    setSelectedSourceImageId(imageId);
+    setSelectedAtlasImageId(undefined);
+    setSelectedRipperId(undefined);
+    setImageMenu({ kind: "source", imageId, x: clientX, y: clientY });
+  }
+
   function onAtlasImageContextMenu(imageId: string | undefined, clientX: number, clientY: number) {
-    if (!imageId) return setRipperMenu(null);
-    const ripper = rippers.find((item) => item.outputImageId === imageId);
-    if (!ripper || !isRipperCurved(ripper)) return setRipperMenu(null);
-    setRipperMenu({ ripperId: ripper.id, x: clientX, y: clientY });
+    if (!imageId) return setImageMenu(null);
+    setSelectedAtlasImageId(imageId);
+    setSelectedSourceImageId(undefined);
+    setSelectedRipperId(undefined);
+    setImageMenu({ kind: "atlas", imageId, x: clientX, y: clientY });
   }
 
   function onRipperEditStart(id: string) {
@@ -1029,8 +1089,8 @@ export function App(): ReactElement {
               selectedRipperId={selectedRipperId}
               view={sourceView}
               onViewChange={setSourceView}
-              onSelectImage={setSelectedSourceImageId}
-              onSelectRipper={setSelectedRipperId}
+              onSelectImage={selectSourceImage}
+              onSelectRipper={selectRipper}
               onMoveImage={moveSourceImage}
               onScaleImage={scaleSourceImage}
               onMoveRipper={moveRipper}
@@ -1038,6 +1098,7 @@ export function App(): ReactElement {
               onMoveVertices={moveVertices}
               onSetEdgeCurve={setEdgeCurve}
               onRemoveEdgeCurve={removeEdgeCurve}
+              onImageContextMenu={onSourceImageContextMenu}
               onRipperEditStart={onRipperEditStart}
               onRipperEditEnd={onRipperEditEnd}
               onImageEditStart={onImageEditStart}
@@ -1070,7 +1131,7 @@ export function App(): ReactElement {
               view={atlasView}
               livePreview={livePreviewRef}
               onViewChange={setAtlasView}
-              onSelectImage={setSelectedAtlasImageId}
+              onSelectImage={selectAtlasImage}
               onMoveImage={moveAtlasImage}
               onScaleImage={scaleAtlasImage}
               onRotateImage={rotateAtlasImage}
@@ -1138,24 +1199,43 @@ export function App(): ReactElement {
           />
         )}
       </div>
-      {ripperMenu && (() => {
-        const menuRipper = rippers.find((item) => item.id === ripperMenu.ripperId);
-        if (!menuRipper) return null;
-        const conserving = shouldConserve(menuRipper);
+      {imageMenu && (() => {
+        const image = imageMenu.kind === "source"
+          ? sourceImages.find((item) => item.id === imageMenu.imageId)
+          : atlasImages.find((item) => item.id === imageMenu.imageId);
+        if (!image) return null;
+        const menuRipper = imageMenu.kind === "atlas"
+          ? rippers.find((item) => item.outputImageId === imageMenu.imageId)
+          : undefined;
+        const conserving = menuRipper ? shouldConserve(menuRipper) : false;
         return (
           <>
-            <div className="context-menu__backdrop" onPointerDown={() => setRipperMenu(null)} onContextMenu={(event) => { event.preventDefault(); setRipperMenu(null); }} />
-            <ul className="context-menu" style={{ left: ripperMenu.x, top: ripperMenu.y }} role="menu" aria-label="Ripper options">
+            <div className="context-menu__backdrop" onPointerDown={() => setImageMenu(null)} onContextMenu={(event) => { event.preventDefault(); setImageMenu(null); }} />
+            <ul className="context-menu" style={{ left: imageMenu.x, top: imageMenu.y }} role="menu" aria-label={`${imageMenu.kind === "source" ? "Source image" : "Texture"} actions`}>
               <li role="none">
                 <button
                   type="button"
-                  role="menuitemcheckbox"
-                  aria-checked={conserving}
-                  onClick={() => { toggleConserveShape(ripperMenu.ripperId); setRipperMenu(null); }}
+                  role="menuitem"
+                  onClick={() => {
+                    if (imageMenu.kind === "source") deleteSourceImage(imageMenu.imageId);
+                    else deleteAtlasImage(imageMenu.imageId);
+                  }}
                 >
-                  {conserving ? "✓ " : " "}Preserve curved shape
+                  Delete {imageMenu.kind === "source" ? "Image" : "Texture"}
                 </button>
               </li>
+              {menuRipper && isRipperCurved(menuRipper) && (
+                <li role="none">
+                  <button
+                    type="button"
+                    role="menuitemcheckbox"
+                    aria-checked={conserving}
+                    onClick={() => { toggleConserveShape(menuRipper.id); setImageMenu(null); }}
+                  >
+                    {conserving ? "✓ " : " "}Preserve curved shape
+                  </button>
+                </li>
+              )}
             </ul>
           </>
         );
