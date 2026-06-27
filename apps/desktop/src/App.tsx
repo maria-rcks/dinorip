@@ -8,7 +8,6 @@ import {
   deleteRipperPoint,
   packAtlasPositions,
   findOwnerImageIndex,
-  flipVertical,
   getPixel,
   insertRipperPoint,
   inferExtractionSize,
@@ -1281,7 +1280,7 @@ function useApp(): ReactElement {
     if (images.length === 0) return;
     if (images.length > 1) {
       const result = await window.dinorip.exportAllPng({
-        images: images.map((image) => toIpcImage(flipVertical(image.image)))
+        images: images.map((image) => toIpcImage(image.image))
       });
       setStatus(result.canceled ? "Export selected canceled" : `Exported ${result.paths.length} selected textures`);
       return;
@@ -1289,7 +1288,7 @@ function useApp(): ReactElement {
     const image = images[0]!;
     const result = await window.dinorip.savePng({
       defaultName: "texture",
-      image: toIpcImage(flipVertical(image.image))
+      image: toIpcImage(image.image)
     });
     setStatus(result.canceled ? "Export canceled" : "Texture exported");
   }
@@ -1297,7 +1296,7 @@ function useApp(): ReactElement {
   async function exportAll() {
     if (atlasImages.length === 0) return;
     const result = await window.dinorip.exportAllPng({
-      images: atlasImages.map((image) => toIpcImage(flipVertical(image.image)))
+      images: atlasImages.map((image) => toIpcImage(image.image))
     });
     setStatus(result.canceled ? "Export all canceled" : `Exported ${result.paths.length} textures`);
   }
