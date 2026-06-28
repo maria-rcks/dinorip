@@ -1,7 +1,7 @@
 import { useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
-import type { PointerEvent as ReactPointerEvent, ReactElement } from "react";
-import { ExternalLink, X } from "lucide-react";
+import type { CSSProperties, PointerEvent as ReactPointerEvent, ReactElement } from "react";
+import { Download, Power, RefreshCw, X } from "lucide-react";
 import type { UpdateState } from "@dinorip/ipc-contracts";
 
 interface UpdateIndicatorProps {
@@ -16,12 +16,15 @@ interface UpdateModalProps {
 }
 
 export function getUpdateVersion(state: UpdateState | null): string | null {
-  return state?.availableVersion ?? null;
+  return state?.downloadedVersion ?? state?.availableVersion ?? null;
 }
 
 export function isUpdateActionable(state: UpdateState | null): state is UpdateState {
   if (!state || !state.enabled) return false;
-  return state.status === "available";
+  if (state.status === "available" || state.status === "downloading" || state.status === "downloaded") {
+    return true;
+  }
+  return state.status === "error" && state.canRetry;
 }
 
 export function shouldShowUpdateModal(state: UpdateState | null, dismissedVersion: string | null): state is UpdateState {
@@ -48,6 +51,9 @@ export function UpdateIndicator({ state, onOpen }: UpdateIndicatorProps): ReactE
 export function UpdateModal({ state, onClose, onPrimaryAction }: UpdateModalProps): ReactElement {
   const dialogRef = useRef<HTMLDialogElement | null>(null);
   const onCloseRef = useRef(onClose);
+  const progress = getProgressPercent(state);
+  const progressStyle = { "--update-progress": `${progress}%` } as CSSProperties;
+  const PrimaryIcon = getPrimaryIcon(state);
   onCloseRef.current = onClose;
 
   useEffect(() => {
@@ -91,28 +97,55 @@ export function UpdateModal({ state, onClose, onPrimaryAction }: UpdateModalProp
             <p className="update-modal__error">{state.message}</p>
           ) : null}
         </div>
-        {state.status !== "error" ? (
-          <footer className="update-modal__footer">
-            <button
-              type="button"
-              className="update-cta"
-              data-status={state.status}
-              onClick={onPrimaryAction}
-            >
-              <span className="update-cta__label">
-                <ExternalLink size={14} />
-                Open Download Page
-              </span>
-            </button>
-          </footer>
-        ) : null}
+        <footer className="update-modal__footer">
+          <button
+            type="button"
+            className="update-cta"
+            data-status={state.status}
+            style={progressStyle}
+            onClick={onPrimaryAction}
+            disabled={state.status === "downloading"}
+          >
+            <span className="update-cta__fill" aria-hidden="true" />
+            <span className="update-cta__label">
+              <PrimaryIcon size={14} />
+              {getPrimaryLabel(state)}
+            </span>
+          </button>
+        </footer>
       </div>
     </dialog>,
     document.body
   );
 }
 
+function getProgressPercent(state: UpdateState): number {
+  if (state.status === "downloaded") return 100;
+  if (state.status !== "downloading") return 0;
+  return Math.max(0, Math.min(100, Math.floor(state.downloadPercent ?? 0)));
+}
+
+function getPrimaryIcon(state: UpdateState) {
+  if (state.status === "downloaded" || state.errorContext === "install") return Power;
+  if (state.status === "error" || state.errorContext === "download") return RefreshCw;
+  return Download;
+}
+
+function getPrimaryLabel(state: UpdateState): string {
+  if (state.status === "downloading") {
+    return `Downloading... ${getProgressPercent(state)}%`;
+  }
+  if (state.status === "downloaded" || state.errorContext === "install") {
+    return "Restart and Install";
+  }
+  if (state.status === "error" || state.errorContext === "download") {
+    return "Retry Update";
+  }
+  return "Download and Install";
+}
+
 function getModalTitle(state: UpdateState): string {
+  if (state.status === "downloaded") return "Update ready";
   if (state.status === "error") return "Update needs attention";
   return "Update available";
 }
@@ -124,20 +157,37 @@ function getVersionHint(state: UpdateState): string {
 
 function getLeadCopy(state: UpdateState): string {
   const version = getUpdateVersion(state) ?? "the latest version";
+  if (state.status === "downloaded") {
+    return `DinoRip ${version} has downloaded and is ready to install.`;
+  }
+  if (state.status === "downloading") {
+    return `Downloading DinoRip ${version}.`;
+  }
   if (state.status === "error") {
-    return "DinoRip could not finish checking for updates.";
+    return "The update did not finish.";
   }
   return `DinoRip ${version} is available.`;
 }
 
 function getSecondaryCopy(state: UpdateState): string {
-  if (state.status === "error") {
-    return "Check your connection, then use the app menu to check again.";
+  if (state.status === "downloaded") {
+    return "Installing will restart DinoRip. Save any open project changes before continuing.";
   }
-  return "Open GitHub Releases, download the build for your platform, quit DinoRip, then run the installer.";
+  if (state.status === "downloading") {
+    return "The button fills as the download progresses. You can keep working while DinoRip gets the update ready.";
+  }
+  if (state.status === "error" && state.errorContext === "install") {
+    return "The update is downloaded, but DinoRip could not restart into the installer.";
+  }
+  if (state.status === "error") {
+    return "Check your connection, then retry the update.";
+  }
+  return "Download it now, or close this window and use the update notice in the top bar later.";
 }
 
 function getIndicatorLabel(state: UpdateState): string {
+  if (state.status === "downloading") return `Downloading ${getProgressPercent(state)}%`;
+  if (state.status === "downloaded") return "Update ready";
   if (state.status === "error") return "Update issue";
   return "Update available";
 }
@@ -147,5 +197,11 @@ function getIndicatorTitle(state: UpdateState): string {
   if (state.status === "error") {
     return "DinoRip could not check for updates.";
   }
-  return `DinoRip ${version ?? "update"} is available. Open update details.`;
+  if (state.status === "downloaded") {
+    return `DinoRip ${version ?? "update"} is ready to install.`;
+  }
+  if (state.status === "downloading") {
+    return `Downloading DinoRip ${version ?? "update"} (${getProgressPercent(state)}%).`;
+  }
+  return `DinoRip ${version ?? "update"} is available. Open updater.`;
 }

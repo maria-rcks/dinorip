@@ -9,6 +9,8 @@ export const IPC_CHANNELS = {
   updateState: "dinorip:update-state",
   getUpdateState: "dinorip:get-update-state",
   checkForUpdate: "dinorip:check-for-update",
+  downloadUpdate: "dinorip:download-update",
+  installUpdate: "dinorip:install-update",
   openUpdatePage: "dinorip:open-update-page"
 } as const;
 
@@ -60,6 +62,8 @@ export type UpdateStatus =
   | "checking"
   | "up-to-date"
   | "available"
+  | "downloading"
+  | "downloaded"
   | "error";
 
 export interface UpdateState {
@@ -67,13 +71,22 @@ export interface UpdateState {
   status: UpdateStatus;
   currentVersion: string;
   availableVersion: string | null;
+  downloadedVersion: string | null;
+  downloadPercent: number | null;
   checkedAt: string | null;
   message: string | null;
+  errorContext: "check" | "download" | "install" | null;
   canRetry: boolean;
 }
 
 export interface UpdateCheckResult {
   checked: boolean;
+  state: UpdateState;
+}
+
+export interface UpdateActionResult {
+  accepted: boolean;
+  completed: boolean;
   state: UpdateState;
 }
 
@@ -107,6 +120,8 @@ export interface DinoripApi {
   toggleFullscreen(): Promise<boolean>;
   getUpdateState(): Promise<UpdateState>;
   checkForUpdate(): Promise<UpdateCheckResult>;
+  downloadUpdate(): Promise<UpdateActionResult>;
+  installUpdate(): Promise<UpdateActionResult>;
   openUpdatePage(): Promise<OpenUpdatePageResult>;
   onUpdateState(handler: (state: UpdateState) => void): () => void;
 }

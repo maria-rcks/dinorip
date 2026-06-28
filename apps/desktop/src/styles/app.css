@@ -263,19 +263,50 @@ svg {
 }
 
 .update-cta {
+  --update-progress: 0%;
   position: relative;
   min-width: 230px;
   overflow: hidden;
+  background: #242524;
+  color: var(--ink);
+}
+
+.update-cta:disabled {
+  opacity: 1;
+  cursor: progress;
+}
+
+.update-cta__fill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: var(--update-progress);
   background: var(--accent);
-  color: var(--black);
+  transition: width 120ms linear;
+  z-index: 0;
+}
+
+.update-cta[data-status="available"] .update-cta__fill,
+.update-cta[data-status="error"] .update-cta__fill,
+.update-cta[data-status="downloaded"] .update-cta__fill {
+  width: 100%;
+}
+
+.update-cta[data-status="downloaded"] .update-cta__fill {
+  background: var(--accent-2);
 }
 
 .update-cta__label {
   position: relative;
+  z-index: 1;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 6px;
+  text-shadow: 1px 1px 0 #000;
+}
+
+.update-cta[data-status="downloaded"] .update-cta__label {
+  color: var(--black);
   text-shadow: none;
 }
 

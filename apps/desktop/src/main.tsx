@@ -18,12 +18,25 @@ if (!window.dinorip) {
       status: "disabled",
       currentVersion: "0.0.0",
       availableVersion: null,
+      downloadedVersion: null,
+      downloadPercent: null,
       checkedAt: null,
       message: "Automatic updates are only available in the desktop app.",
+      errorContext: null,
       canRetry: false
     }),
     checkForUpdate: async () => ({
       checked: false,
+      state: await window.dinorip.getUpdateState()
+    }),
+    downloadUpdate: async () => ({
+      accepted: false,
+      completed: false,
+      state: await window.dinorip.getUpdateState()
+    }),
+    installUpdate: async () => ({
+      accepted: false,
+      completed: false,
       state: await window.dinorip.getUpdateState()
     }),
     openUpdatePage: async () => ({

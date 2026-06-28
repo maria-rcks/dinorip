@@ -294,6 +294,7 @@ function useApp(): ReactElement {
   const [appState, dispatchAppState] = useReducer(appStateReducer, initialAppState);
   const [updateState, setUpdateState] = useState<UpdateState | null>(null);
   const [dismissedUpdateVersion, setDismissedUpdateVersion] = useState<string | null>(null);
+  const updateActionInFlightRef = useRef(false);
   const {
     sourceImages,
     atlasImages,
@@ -1310,19 +1311,21 @@ function useApp(): ReactElement {
     setDismissedUpdateVersion(getUpdateVersion(updateState));
   }, [updateState]);
   const handleUpdatePrimaryAction = useCallback(() => {
-    if (!updateState) return;
-    void window.dinorip.openUpdatePage()
+    if (!updateState || updateState.status === "downloading" || updateActionInFlightRef.current) return;
+    updateActionInFlightRef.current = true;
+    const action = updateState.status === "downloaded" || updateState.errorContext === "install"
+      ? window.dinorip.installUpdate()
+      : window.dinorip.downloadUpdate();
+    void action
       .then((result) => {
         setUpdateState(result.state);
-        if (result.opened) {
-          setDismissedUpdateVersion(getUpdateVersion(result.state));
-          return;
-        }
-        setStatus(result.state.message ?? "Could not open update page");
       })
       .catch((error: unknown) => {
-        const message = error instanceof Error ? error.message : "Could not open update page";
+        const message = error instanceof Error ? error.message : "Update action failed";
         setStatus(message);
+      })
+      .finally(() => {
+        updateActionInFlightRef.current = false;
       });
   }, [updateState]);
 

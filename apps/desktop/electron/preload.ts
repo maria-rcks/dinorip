@@ -25,6 +25,8 @@ const CHANNELS = {
   updateState: "dinorip:update-state",
   getUpdateState: "dinorip:get-update-state",
   checkForUpdate: "dinorip:check-for-update",
+  downloadUpdate: "dinorip:download-update",
+  installUpdate: "dinorip:install-update",
   openUpdatePage: "dinorip:open-update-page"
 } as const satisfies typeof Contracts.IPC_CHANNELS;
 
@@ -43,6 +45,8 @@ const api: DinoripApi = {
   toggleFullscreen: () => ipcRenderer.invoke(CHANNELS.toggleFullscreen),
   getUpdateState: () => ipcRenderer.invoke(CHANNELS.getUpdateState),
   checkForUpdate: () => ipcRenderer.invoke(CHANNELS.checkForUpdate),
+  downloadUpdate: () => ipcRenderer.invoke(CHANNELS.downloadUpdate),
+  installUpdate: () => ipcRenderer.invoke(CHANNELS.installUpdate),
   openUpdatePage: () => ipcRenderer.invoke(CHANNELS.openUpdatePage),
   onUpdateState: (handler) => {
     const listener = (_event: Electron.IpcRendererEvent, state: Contracts.UpdateState) => handler(state);
